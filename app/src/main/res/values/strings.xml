@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">GithubSearchIUser</string>
+
+    <string name="error_state_title">Sorry</string>
+    <string name="error_state_message">Try again later or check your connection</string>
+    <string name="username">Username</string>
+    <string name="empty_state_title">Oops</string>
+    <string name="empty_state_message">User name not found</string>
+
+
+</resources>
