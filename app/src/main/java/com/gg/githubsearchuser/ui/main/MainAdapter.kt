@@ -32,11 +32,13 @@ class MainAdapter(private val context: Context) : RecyclerView.Adapter<MainAdapt
 
     fun addData(list: List<User>) {
         this.listUser.addAll(list)
+        notifyDataSetChanged()
     }
 
     fun setList(list: List<User>) {
         this.listUser.clear()
         this.listUser.addAll(list)
+        notifyDataSetChanged()
     }
 
     override fun onBindViewHolder(holder: MainViewHolder, position: Int) {

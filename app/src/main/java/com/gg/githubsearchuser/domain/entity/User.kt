@@ -4,4 +4,5 @@ data class User(
     val avatarUrl: String,
     val id: Int,
     val username: String,
+    var detailUser: DetailUser? = null
 )

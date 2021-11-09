@@ -15,61 +15,76 @@ class MainViewModel @Inject constructor(
 
     override fun onIntentReceived(intent: MainContract.Intent) {
         when (intent) {
-            is MainContract.Intent.LoadNext -> {
-                loadMoreUser(intent.page)
+            is MainContract.Intent.LoadNextSearchUser -> {
+                getUserSearch(intent.query, intent.page, true)
             }
             is MainContract.Intent.SearchUser -> {
-                getUserSearch(intent.query)
+                getUserSearch(intent.query, 1, false)
             }
         }
     }
 
-    private fun getUserSearch(query: String) = viewModelScope.launch {
-        setState { copy(viewState = MainContract.ViewState.Loading) }
-        val params = SearchUser.Params(query = query, page = 1)
-
-        when (
-            val result = searchUser(params)
-        ) {
-            is Result.Success -> {
-                setState {
-                    copy(
-                        viewState = MainContract.ViewState.SuccessNewSearch,
-                        listUser = result.value,
-                        searchQuery = query
-                    )
-                }
-            }
-            is Result.Error -> {
-                setEffect(MainContract.Effect.ShowToast(result.errorMessage))
-                setState {
-                    copy(
-                        viewState = MainContract.ViewState.Error,
-                        listUser = emptyList()
-                    )
-                }
-            }
+    private fun getUserSearch(query: String, page: Int, isLoadMore: Boolean) {
+        setState {
+            copy(
+                showLoading = true
+            )
         }
-    }
 
-    private fun loadMoreUser(page: Int) = viewModelScope.launch {
-        val query = state.value?.searchQuery.orEmpty()
         val params = SearchUser.Params(query = query, page = page)
 
-        when (
-            val result = searchUser(params)
-        ) {
-            is Result.Success -> {
-                setState {
-                    copy(
-                        viewState = MainContract.ViewState.SuccessLoadMore,
-                        listUser = result.value
-                    )
+        viewModelScope.launch {
+            when (
+                val result = searchUser(params)
+            ) {
+                is Result.Success -> {
+                    if (result.value.isEmpty()) {
+                        if (isLoadMore) {
+                            setState {
+                                copy(
+                                    viewState = MainContract.ViewState.EmptyListLoadMore,
+                                    listUser = emptyList(),
+                                    showLoading = false
+                                )
+                            }
+                        } else {
+                            setState {
+                                copy(
+                                    viewState = MainContract.ViewState.EmptyListFirstInit,
+                                    listUser = emptyList(),
+                                    showLoading = false
+                                )
+                            }
+                        }
+                    } else {
+                        if (isLoadMore) {
+                            setState {
+                                copy(
+                                    viewState = MainContract.ViewState.SuccessLoadMore,
+                                    listUser = result.value,
+                                    showLoading = false
+                                )
+                            }
+                        } else {
+                            setState {
+                                copy(
+                                    viewState = MainContract.ViewState.SuccessFirstInit,
+                                    listUser = result.value,
+                                    showLoading = false
+                                )
+                            }
+                        }
+                    }
                 }
-            }
-            is Result.Error -> {
-                setEffect(MainContract.Effect.ShowToast(result.errorMessage))
-                setState { copy(viewState = MainContract.ViewState.Idle) }
+                is Result.Error -> {
+                    setState {
+                        copy(
+                            viewState = MainContract.ViewState.ErrorFirstInit,
+                            listUser = emptyList(),
+                            showLoading = false,
+                        )
+                    }
+                }
             }
         }
     }

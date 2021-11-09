@@ -41,32 +41,60 @@ class MainActivity :
 
     override fun invalidate(state: MainContract.State) {
         when (state.viewState) {
-            MainContract.ViewState.Error -> {
-                binding.errorView.visibility = View.VISIBLE
-                binding.errorView.run {
-                    showError()
+            MainContract.ViewState.EmptyListFirstInit -> {
+                with(binding) {
+                    errorView.visibility = View.VISIBLE
+                    errorView.run {
+                        setUpErrorView(
+                            title = resources.getString(R.string.empty_state_title),
+                            message = resources.getString(R.string.empty_state_message)
+                        )
+                        binding.buttonRetry.setOnClickListener {
+                            currentPage = 1
+                            viewModel.onIntentReceived(MainContract.Intent.SearchUser(editTextQuery.text.toString()))
+                        }
+                    }
+                    adapter.setList(emptyList())
+                    recyclerView.visibility = View.GONE
                 }
-                binding.pgProgressList.visibility = View.GONE
-                adapter.setList(state.listUser)
-                binding.recyclerView.visibility = View.GONE
             }
-            MainContract.ViewState.Loading -> {
-                binding.errorView.visibility = View.GONE
-                binding.pgProgressList.visibility = View.VISIBLE
-                binding.recyclerView.visibility = View.VISIBLE
+            MainContract.ViewState.ErrorFirstInit -> {
+                with(binding) {
+                    errorView.visibility = View.VISIBLE
+                    errorView.run {
+                        setUpErrorView()
+                        binding.buttonRetry.setOnClickListener {
+                            currentPage = 1
+                            viewModel.onIntentReceived(MainContract.Intent.SearchUser(editTextQuery.text.toString()))
+                        }
+                    }
+                    adapter.setList(emptyList())
+                    recyclerView.visibility = View.GONE
+                }
             }
-            MainContract.ViewState.SuccessNewSearch -> {
-                binding.errorView.visibility = View.GONE
-                binding.pgProgressList.visibility = View.GONE
-                binding.recyclerView.visibility = View.VISIBLE
-                adapter.setList(state.listUser)
-                hideSoftKeyboard(binding.editTextQuery)
+            MainContract.ViewState.ErrorLoadMore -> {
+                with(binding) {
+                    recyclerView.visibility = View.VISIBLE
+                }
+            }
+            MainContract.ViewState.Idle -> {}
+            MainContract.ViewState.SuccessFirstInit -> {
+                with(binding) {
+                    recyclerView.visibility = View.VISIBLE
+                    adapter.setList(state.listUser)
+                    errorView.visibility = View.GONE
+                    hideSoftKeyboard(editTextQuery)
+                }
             }
             MainContract.ViewState.SuccessLoadMore -> {
-                binding.errorView.visibility = View.GONE
-                binding.pgProgressList.visibility = View.GONE
-                binding.recyclerView.visibility = View.VISIBLE
-                adapter.addData(state.listUser)
+                with(binding) {
+                    recyclerView.visibility = View.VISIBLE
+                    adapter.addData(state.listUser)
+                    errorView.visibility = View.GONE
+                }
+            }
+            MainContract.ViewState.EmptyListLoadMore -> {
+                Toast.makeText(this@MainActivity, "new list is empty", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -94,7 +122,7 @@ class MainActivity :
                 view: RecyclerView?
             ) {
                 currentPage = page + 1
-                dispatch(MainContract.Intent.LoadNext(currentPage))
+                dispatch(MainContract.Intent.LoadNextSearchUser(editTextQuery.text.toString(), currentPage))
             }
         }
         binding.recyclerView.addOnScrollListener(scrollListener)
@@ -105,6 +133,7 @@ class MainActivity :
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                 if (s.isEmpty()) {
                     adapter.setList(emptyList())
+                    recyclerView.visibility = View.GONE
                 } else {
                     dispatch(MainContract.Intent.SearchUser(s.toString()))
                 }
