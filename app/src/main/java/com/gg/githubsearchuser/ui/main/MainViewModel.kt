@@ -77,12 +77,22 @@ class MainViewModel @Inject constructor(
                     }
                 }
                 is Result.Error -> {
-                    setState {
-                        copy(
-                            viewState = MainContract.ViewState.ErrorFirstInit,
-                            listUser = emptyList(),
-                            showLoading = false,
-                        )
+                    if (isLoadMore) {
+                        setState {
+                            copy(
+                                viewState = MainContract.ViewState.ErrorLoadMore,
+                                listUser = emptyList(),
+                                showLoading = false,
+                            )
+                        }
+                    } else {
+                        setState {
+                            copy(
+                                viewState = MainContract.ViewState.ErrorFirstInit,
+                                listUser = emptyList(),
+                                showLoading = false,
+                            )
+                        }
                     }
                 }
             }

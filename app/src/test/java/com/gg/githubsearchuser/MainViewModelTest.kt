@@ -108,7 +108,7 @@ class MainViewModelTest {
             MainContract.Intent.SearchUser("i")
         )
 
-        assertEquals(observedStateList.first().viewState, MainContract.ViewState.Loading)
+        assertEquals(observedStateList.first().showLoading, true)
     }
 
     @Test
@@ -124,9 +124,24 @@ class MainViewModelTest {
             MainContract.Intent.SearchUser("i")
         )
 
-        assertEquals(observedStateList.last().viewState, MainContract.ViewState.SuccessNewSearch)
+        assertEquals(observedStateList.last().viewState, MainContract.ViewState.SuccessFirstInit)
         assertEquals(observedStateList.last().listUser[0].username, userName)
         assertEquals(observedStateList.last().listUser[0].id, id)
+    }
+
+    @Test
+    fun `onSearchUser success but empty should set display state to empty state`() {
+
+        coEvery {
+            searchUser(any())
+        } returns Result.Success(emptyList())
+
+        viewModel.onIntentReceived(
+            MainContract.Intent.SearchUser("i")
+        )
+
+        assertEquals(observedStateList.last().showLoading, false)
+        assertEquals(observedStateList.last().viewState, MainContract.ViewState.EmptyListFirstInit)
     }
 
     @Test
@@ -140,12 +155,11 @@ class MainViewModelTest {
             MainContract.Intent.SearchUser("i")
         )
 
-        assertEquals(observedStateList.last().viewState, MainContract.ViewState.Error)
-        assertEquals(observedEffectList.last(), MainContract.Effect.ShowToast(errorMessage))
+        assertEquals(observedStateList.last().viewState, MainContract.ViewState.ErrorFirstInit)
     }
 
     @Test
-    fun `onLoadMore success should set display state to success and Show new`() {
+    fun `onLoadMore success should set display state to success and Show new data`() {
         val userName = "halim"
         val id = 321
 
@@ -154,12 +168,27 @@ class MainViewModelTest {
         } returns resultLoadMore
 
         viewModel.onIntentReceived(
-            MainContract.Intent.LoadNext(2)
+            MainContract.Intent.LoadNextSearchUser("i", 2)
         )
 
         assertEquals(observedStateList.last().viewState, MainContract.ViewState.SuccessLoadMore)
         assertEquals(observedStateList.last().listUser[0].username, userName)
         assertEquals(observedStateList.last().listUser[0].id, id)
+    }
+
+    @Test
+    fun `onLoadMore success but empty should show toast message`() {
+
+        coEvery {
+            searchUser(any())
+        } returns Result.Success(emptyList())
+
+        viewModel.onIntentReceived(
+            MainContract.Intent.LoadNextSearchUser("i", 2)
+        )
+
+        assertEquals(observedStateList.last().showLoading, false)
+        assertEquals(observedStateList.last().viewState, MainContract.ViewState.EmptyListLoadMore)
     }
 
     @Test
@@ -170,10 +199,9 @@ class MainViewModelTest {
         } returns Result.Error(errorMessage, 0)
 
         viewModel.onIntentReceived(
-            MainContract.Intent.LoadNext(2)
+            MainContract.Intent.LoadNextSearchUser("i", 2)
         )
 
-        assertEquals(observedStateList.last().viewState, MainContract.ViewState.Idle)
-        assertEquals(observedEffectList.last(), MainContract.Effect.ShowToast(errorMessage))
+        assertEquals(observedStateList.last().viewState, MainContract.ViewState.ErrorLoadMore)
     }
 }

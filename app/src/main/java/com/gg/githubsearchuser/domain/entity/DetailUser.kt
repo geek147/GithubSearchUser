@@ -10,4 +10,5 @@ data class DetailUser(
     val location: String? = null,
     val email: String? = null,
     val avatarUrl: String? = null,
+    val createdAt: String? = null
 )

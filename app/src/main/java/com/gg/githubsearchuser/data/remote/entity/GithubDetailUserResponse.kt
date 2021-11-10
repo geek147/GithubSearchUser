@@ -84,6 +84,7 @@ data class GithubDetailUserResponse(
             loginName = login.orEmpty(),
             company = company.orEmpty(),
             avatarUrl = avatarUrl.orEmpty(),
+            createdAt = createdAt.orEmpty()
         )
     }
 }

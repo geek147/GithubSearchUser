@@ -56,6 +56,7 @@ class MainActivity :
                     }
                     adapter.setList(emptyList())
                     recyclerView.visibility = View.GONE
+                    swipeContainer.isRefreshing = false
                 }
             }
             MainContract.ViewState.ErrorFirstInit -> {
@@ -70,11 +71,13 @@ class MainActivity :
                     }
                     adapter.setList(emptyList())
                     recyclerView.visibility = View.GONE
+                    swipeContainer.isRefreshing = false
                 }
             }
             MainContract.ViewState.ErrorLoadMore -> {
                 with(binding) {
                     recyclerView.visibility = View.VISIBLE
+                    swipeContainer.isRefreshing = false
                 }
             }
             MainContract.ViewState.Idle -> {}
@@ -84,6 +87,7 @@ class MainActivity :
                     adapter.setList(state.listUser)
                     errorView.visibility = View.GONE
                     hideSoftKeyboard(editTextQuery)
+                    swipeContainer.isRefreshing = false
                 }
             }
             MainContract.ViewState.SuccessLoadMore -> {
@@ -91,10 +95,12 @@ class MainActivity :
                     recyclerView.visibility = View.VISIBLE
                     adapter.addData(state.listUser)
                     errorView.visibility = View.GONE
+                    swipeContainer.isRefreshing = false
                 }
             }
             MainContract.ViewState.EmptyListLoadMore -> {
                 Toast.makeText(this@MainActivity, "new list is empty", Toast.LENGTH_SHORT).show()
+                binding.swipeContainer.isRefreshing = false
             }
         }
     }
@@ -119,13 +125,27 @@ class MainActivity :
             override fun onLoadMore(
                 page: Int,
                 totalItemsCount: Int,
-                view: RecyclerView?
+                view: RecyclerView?,
             ) {
                 currentPage = page + 1
                 dispatch(MainContract.Intent.LoadNextSearchUser(editTextQuery.text.toString(), currentPage))
             }
         }
         binding.recyclerView.addOnScrollListener(scrollListener)
+        binding.swipeContainer.setOnRefreshListener { // Your code to refresh the list here.
+            // Make sure you call swipeContainer.setRefreshing(false)
+            // once the network request has completed successfully.
+            currentPage += 1
+            dispatch(MainContract.Intent.LoadNextSearchUser(editTextQuery.text.toString(), currentPage))
+        }
+        // Configure the refreshing colors
+        // Configure the refreshing colors
+        binding.swipeContainer.setColorSchemeResources(
+            android.R.color.holo_blue_bright,
+            android.R.color.holo_green_light,
+            android.R.color.holo_orange_light,
+            android.R.color.holo_red_light
+        )
     }
 
     private fun setupSearchText() {
